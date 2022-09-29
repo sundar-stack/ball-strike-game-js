@@ -2,8 +2,11 @@ const randomNumEle = document.querySelector(".random__number");
 const currentAttemptEle = document.querySelector(".current_attempt");
 const currentGuessEle = document.querySelector(".current_guess");
 const gameDetailsText = document.querySelector(".gameDetails__text");
+const newGameButton = document.querySelector(".newGame");
 
-function myRandomInts(quantity, max) {
+newGameButton.disabled = true
+
+function generateRandomDigits(quantity, max) {
   const arr = [];
   while (arr.length < quantity) {
     const candidateInt = Math.floor(Math.random() * max);
@@ -17,132 +20,104 @@ function myRandomInts(quantity, max) {
   };
 }
 
-const { random1, random2, random3, randKeysArr } = myRandomInts(3, 9);
+newGameButton.addEventListener('click', () => {
+  resetGame()
+  gameDetailsText.innerHTML = ''
+})
+
+const { random1, random2, random3, randKeysArr } = generateRandomDigits(3, 9);
 let rand1 = random1;
 let rand2 = random2;
 let rand3 = random3;
 let randomKeysArr = randKeysArr;
 
 randomNumEle.innerHTML = `Random Number - ${rand1},${rand2},${rand3}`;
-const allKeys = document.querySelectorAll(".number");
+const gameDigitButtons = document.querySelectorAll(".number");
 
-class ClickedItems {
-  constructor() {
-    this.currentAttempt = 1;
-    this.firstAttempt = {
-      clickedKeys: [],
-      score: {
-        balls: 0,
-        strike: 0,
-      },
-    };
-  }
-}
 
 let gameWinObj;
-let currentAttempt = 1;
-let clickedItems = {
-  firstAttempt: {
-    clickedKeys: [],
-    balls: 0,
-    strike: 0,
-  },
-  secondAttempt: {
-    clickedKeys: [],
-    balls: 0,
-    strike: 0,
-  },
-  thirdAttempt: {
-    clickedKeys: [],
-    balls: 0,
-    strike: 0,
-  },
-  fourthAttempt: {
-    clickedKeys: [],
-    balls: 0,
-    strike: 0,
-  },
-  totalAttempts: 0,
-};
+let currentAttempt = 0;
+let clickedItemsData = [];
+let totalAttempts = 0;
 
-currentAttemptEle.innerHTML = `Current Attempt - ${currentAttempt}`;
+currentAttemptEle.innerHTML = `Current Attempt - ${currentAttempt + 1}`;
 
-allKeys.forEach((element) => {
+gameDigitButtons.forEach((element) => {
   element.addEventListener("click", (e) => {
     e.stopPropagation();
     const clickedElement = e.target;
     const clickedId = parseInt(e.target.getAttribute("id"));
 
-    if (currentAttempt === 1) {
-      handleClickedKeysLogic(clickedElement, clickedId, "firstAttempt");
-    } else if (currentAttempt === 2) {
-      handleClickedKeysLogic(clickedElement, clickedId, "secondAttempt");
-    } else if (currentAttempt === 3) {
-      handleClickedKeysLogic(clickedElement, clickedId, "thirdAttempt");
-    } else if (currentAttempt === 4) {
-      handleClickedKeysLogic(clickedElement, clickedId, "fourthAttempt");
+    if (!clickedItemsData[currentAttempt]) {
+      clickedItemsData.push({
+        clickedKeys: [],
+        balls: 0,
+        strike: 0,
+      });
     }
-    console.log("DATA OBJECT????", clickedItems);
-    console.log("currentAttempt???", currentAttempt);
-    console.log("iff all correct ???", gameWinObj);
+
+    handleClickedKeysLogic(clickedElement, clickedId, currentAttempt);
+
+    console.log("GAME DETAILS OBJECT????", clickedItemsData);
+    console.log("CURRENT ATTEMPT ???", currentAttempt);
+
   });
 });
 
-function handleClickedKeysLogic(clickedElement, clickedId, currentAttemptName) {
-  if (clickedItems[currentAttemptName].clickedKeys.length < 3) {
-    clickedItems[currentAttemptName].clickedKeys.push(clickedId);
+function handleClickedKeysLogic(clickedElement, clickedId, currentAttemptIndex) {
+  if (clickedItemsData[currentAttemptIndex].clickedKeys.length < 3) {
+    clickedItemsData[currentAttemptIndex].clickedKeys.push(clickedId);
     clickedElement.setAttribute("disabled", true);
+    const pushedKeys = clickedItemsData[currentAttemptIndex].clickedKeys;
 
-    currentGuessEle.style.display = 'inline'
-    currentGuessEle.innerHTML = clickedItems[currentAttemptName].clickedKeys.join(",")
+    currentGuessEle.style.display = "inline";
+    currentGuessEle.innerHTML = clickedItemsData[currentAttemptIndex].clickedKeys;
 
-    const pushedKeys = clickedItems[currentAttemptName].clickedKeys;
-
-    if (clickedItems[currentAttemptName].clickedKeys.length === 3) {
+    if (clickedItemsData[currentAttemptIndex].clickedKeys.length === 3) {
       if (
         randomKeysArr[0] === pushedKeys[0] &&
         randomKeysArr[1] === pushedKeys[1] &&
         randomKeysArr[2] === pushedKeys[2]
       ) {
-        clickedItems[currentAttemptName].strike = clickedItems[currentAttemptName].strike + 1;
-        clickedItems[currentAttemptName].randomNumbers = randomKeysArr;
-        clickedItems.totalAttempts = currentAttempt - 1;
-        gameWinObj = clickedItems;
-        resetGame();
+        clickedItemsData[currentAttemptIndex].strike = clickedItemsData[currentAttemptIndex].strike + 1;
+        gameWinObj = {
+          totalAttempts: currentAttempt + 1,
+          clickedItemsData,
+          randKeysArr
+        };
+        gameDetailsText.innerHTML = JSON.stringify(clickedItemsData);
+        newGameButton.disabled = false;
+        console.log("GAME OVER FINAL OBJECT???", gameWinObj);
       } else {
-        clickedItems[currentAttemptName].randomNumbers = randomKeysArr;
-        randomKeysArr.forEach((key) => {
-          clickedItems[currentAttemptName].clickedKeys.forEach((clickedKey) => {
-            if (clickedKey === key) {
-              clickedItems[currentAttemptName].balls = clickedItems[currentAttemptName].balls + 1;
-            }
-          });
-        });
-        if (currentAttemptName === "fourthAttempt") {
-          removeDisabledKeys();
-          alert("GAME OVER");
-        } else {
-          currentAttempt++;
-          currentAttemptEle.innerHTML = `Current Attempt - ${currentAttempt}`;
-          clickedItems.totalAttempts = currentAttempt - 1;
-          removeDisabledKeys();
-          currentGuessEle.style.display = 'none'
-          gameDetailsText.innerHTML = JSON.stringify(clickedItems)
-          // resetRandomNumbers();
-        }
+        clickedItemsData[currentAttemptIndex].clickedKeys.forEach((clickedKey, i) => {
+          if (randomKeysArr.includes(clickedKey) && clickedKey === randKeysArr[i]) {
+            clickedItemsData[currentAttemptIndex].strike = clickedItemsData[currentAttemptIndex].strike + 1;
+          } else if (randomKeysArr.includes(clickedKey)) {
+            clickedItemsData[currentAttemptIndex].balls = clickedItemsData[currentAttemptIndex].balls + 1;
+          }
+        })
+        removeDisabledKeys();
+        currentAttempt++;
+        currentAttemptEle.innerHTML = `Current Attempt - ${currentAttempt + 1}`;
+        currentGuessEle.style.display = "none";
+        gameDetailsText.innerHTML = JSON.stringify(clickedItemsData);
       }
     }
   }
 }
 
 function removeDisabledKeys() {
-  allKeys.forEach((element) => {
-    element.removeAttribute("disabled");
+  gameDigitButtons.forEach((element) => {
+    const elementId = parseInt(element.getAttribute("id"));
+    const validateElement = clickedItemsData[currentAttempt].clickedKeys.includes(elementId);
+    if (validateElement) {
+      element.removeAttribute("disabled");
+    }
   });
 }
 
 function resetRandomNumbers() {
-  const { random1, random2, random3, randKeysArr } = myRandomInts(3, 9);
+  const { random1, random2, random3, randKeysArr } = generateRandomDigits(3, 9);
   rand1 = random1;
   rand2 = random2;
   rand3 = random3;
@@ -151,10 +126,12 @@ function resetRandomNumbers() {
 }
 
 function resetGame() {
-  clickedItems = new ClickedItems();
-  currentAttempt = 1;
+  if (clickedItemsData[currentAttempt] && clickedItemsData[currentAttempt].clickedKeys.length !== 0) {
+    removeDisabledKeys();
+  }
+  clickedItemsData = [];
+  currentAttempt = 0;
   currentAttemptEle.innerHTML = `Current Attempt - ${currentAttempt}`;
   resetRandomNumbers();
-  removeDisabledKeys();
-  currentGuessEle.style.display = 'none'
+  currentGuessEle.style.display = "none";
 }
