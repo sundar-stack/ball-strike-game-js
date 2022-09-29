@@ -1,5 +1,7 @@
 const randomNumEle = document.querySelector(".random__number");
 const currentAttemptEle = document.querySelector(".current_attempt");
+const currentGuessEle = document.querySelector(".current_guess");
+const gameDetailsText = document.querySelector(".gameDetails__text");
 
 function myRandomInts(quantity, max) {
   const arr = [];
@@ -7,7 +9,12 @@ function myRandomInts(quantity, max) {
     const candidateInt = Math.floor(Math.random() * max);
     if (arr.indexOf(candidateInt) === -1) arr.push(candidateInt);
   }
-  return { random1: arr[0], random2: arr[1], random3: arr[2], randKeysArr: arr };
+  return {
+    random1: arr[0],
+    random2: arr[1],
+    random3: arr[2],
+    randKeysArr: arr,
+  };
 }
 
 const { random1, random2, random3, randKeysArr } = myRandomInts(3, 9);
@@ -31,25 +38,33 @@ class ClickedItems {
     };
   }
 }
-let strikeRate;
+
+let gameWinObj;
 let currentAttempt = 1;
 let clickedItems = {
   firstAttempt: {
     clickedKeys: [],
+    balls: 0,
+    strike: 0,
   },
   secondAttempt: {
     clickedKeys: [],
+    balls: 0,
+    strike: 0,
   },
   thirdAttempt: {
     clickedKeys: [],
+    balls: 0,
+    strike: 0,
   },
   fourthAttempt: {
     clickedKeys: [],
+    balls: 0,
+    strike: 0,
   },
-  balls: 0,
-  strike: 0,
   totalAttempts: 0,
 };
+
 currentAttemptEle.innerHTML = `Current Attempt - ${currentAttempt}`;
 
 allKeys.forEach((element) => {
@@ -69,19 +84,19 @@ allKeys.forEach((element) => {
     }
     console.log("DATA OBJECT????", clickedItems);
     console.log("currentAttempt???", currentAttempt);
-    console.log("iff all correct ???", strikeRate);
+    console.log("iff all correct ???", gameWinObj);
   });
 });
-
 
 function handleClickedKeysLogic(clickedElement, clickedId, currentAttemptName) {
   if (clickedItems[currentAttemptName].clickedKeys.length < 3) {
     clickedItems[currentAttemptName].clickedKeys.push(clickedId);
     clickedElement.setAttribute("disabled", true);
 
+    currentGuessEle.style.display = 'inline'
+    currentGuessEle.innerHTML = clickedItems[currentAttemptName].clickedKeys.join(",")
+
     const pushedKeys = clickedItems[currentAttemptName].clickedKeys;
-    const strike = clickedItems.strike;
-    const balls = clickedItems.balls;
 
     if (clickedItems[currentAttemptName].clickedKeys.length === 3) {
       if (
@@ -89,32 +104,32 @@ function handleClickedKeysLogic(clickedElement, clickedId, currentAttemptName) {
         randomKeysArr[1] === pushedKeys[1] &&
         randomKeysArr[2] === pushedKeys[2]
       ) {
-        clickedItems.strike = strike + 1;
+        clickedItems[currentAttemptName].strike = clickedItems[currentAttemptName].strike + 1;
         clickedItems[currentAttemptName].randomNumbers = randomKeysArr;
         clickedItems.totalAttempts = currentAttempt - 1;
-        strikeRate = clickedItems;
+        gameWinObj = clickedItems;
         resetGame();
       } else {
         clickedItems[currentAttemptName].randomNumbers = randomKeysArr;
         randomKeysArr.forEach((key) => {
           clickedItems[currentAttemptName].clickedKeys.forEach((clickedKey) => {
             if (clickedKey === key) {
-              clickedItems.balls = clickedItems.balls + 1;
+              clickedItems[currentAttemptName].balls = clickedItems[currentAttemptName].balls + 1;
             }
           });
         });
-        if(currentAttemptName === 'fourthAttempt'){
-          alert("GAME OVER")
+        if (currentAttemptName === "fourthAttempt") {
           removeDisabledKeys();
-        }else{
+          alert("GAME OVER");
+        } else {
           currentAttempt++;
           currentAttemptEle.innerHTML = `Current Attempt - ${currentAttempt}`;
           clickedItems.totalAttempts = currentAttempt - 1;
           removeDisabledKeys();
-          resetRandomNumbers(); 
+          currentGuessEle.style.display = 'none'
+          gameDetailsText.innerHTML = JSON.stringify(clickedItems)
+          // resetRandomNumbers();
         }
-        
-       
       }
     }
   }
@@ -141,5 +156,5 @@ function resetGame() {
   currentAttemptEle.innerHTML = `Current Attempt - ${currentAttempt}`;
   resetRandomNumbers();
   removeDisabledKeys();
+  currentGuessEle.style.display = 'none'
 }
-
